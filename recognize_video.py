@@ -5,6 +5,7 @@
 # import packages
 from imutils.video import VideoStream
 from imutils.video import FPS
+from datetime import date
 import numpy as np
 import argparse
 import imutils
@@ -12,6 +13,7 @@ import pickle
 import time
 import cv2
 import os
+import json
 
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
@@ -23,7 +25,7 @@ ap.add_argument("-r", "--recognizer", required=True,
                 help="path to model trained to recognize faces")
 ap.add_argument("-l", "--le", required=True,
                 help="path to label encoder")
-ap.add_argument("-c", "--confidence", type=float, default=0.5,
+ap.add_argument("-c", "--confidence", type=float, default=0.85,
                 help="minimum probability to filter weak detections")
 args = vars(ap.parse_args())
 
@@ -51,6 +53,11 @@ cols = 640
 
 # start the FPS throughput estimator
 fps = FPS().start()
+
+# teacher found
+record_atendance = False
+attendance_list = []
+recorded = []
 
 # loop over frames from the video file stream
 while True:
@@ -108,16 +115,46 @@ while True:
             proba = preds[j]
             name = le.classes_[j]
 
-            # draw the bounding box of the face along with the
-            # associated probability
-            # testing
-            text = "{}: {:.2f}%".format(name, proba * 100)
-            y = startY - 10 if startY - 10 > 10 else startY + 10
-            cv2.rectangle(frame, (startX, startY), (endX, endY),
-                          (0, 0, 255), 2)
-            cv2.putText(frame, text, (startX, y),
+            # teacher face check
+            with open('dataset/teacher_data.json') as teacherFile:
+                data = json.load(teacherFile)
+                    
+            if(record_atendance):
+                # draw the bounding box
+                text = "{}: {:.2f}%".format(name, proba * 100)
+                y = startY - 10 if startY - 10 > 10 else startY + 10
+                cv2.rectangle(frame, (startX, startY), (endX, endY), (0, 0, 255), 2)
+                cv2.putText(frame, text, (startX, y),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 255), 2)
+
+                # record attendance to file
+                with open('dataset/student_data.json') as studentFile:
+                    data = json.load(studentFile)
+                for studentDict in data["student"]:
+                    if(studentDict["ID"] == name):
+                        if(name not in recorded):
+                            student_dict = {"ID" : name, "name" : studentDict["name"], "time" : date.today(), "subject" : subject}
+                            attendance_list.append(student_dict)
+                            recorded.append(name)
+            else:
+                # check if teacher
+                for teacherDict in data["teacher"]:
+
+                    if(teacherDict["ID"] == name):
+
+                        # draw the bounding box
+                        text = "{}: {:.2f}%".format(name, proba * 100)
+                        y = startY - 10 if startY - 10 > 10 else startY + 10
+                        cv2.rectangle(frame, (startX, startY), (endX, endY), (0, 0, 255), 2)
+                        cv2.putText(frame, text, (startX, y),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 255), 2)
-            print(name)
+
+                        print( teacherDict)
+                        verify = input("Record attendance(yes/no) : ")
+
+                        if(verify == "yes"):
+                            record_atendance = True
+                            subject = teacherDict["subject"]
 
     # update the FPS counter
     fps.update()
@@ -129,6 +166,8 @@ while True:
     # if the `q` key was pressed, break from the loop
     if key == ord("q"):
         break
+
+print(attendance_list)
 
 # stop the timer and display FPS information
 fps.stop()

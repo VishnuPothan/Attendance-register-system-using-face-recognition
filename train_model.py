@@ -1,4 +1,5 @@
 # USAGE
+
 # python train_model.py --embeddings output/face_embed.pickle --recognizer output/face_recognizer.pickle --le output/face_label.pickle
 
 # import packages

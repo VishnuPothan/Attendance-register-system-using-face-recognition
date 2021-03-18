@@ -1,4 +1,5 @@
 # USAGE
+
 # python extract_embeddings.py --dataset dataset --embeddings output/face_embed.pickle --detector model --embedding-model model/openface_nn4.small2.v1.t7
 
 # import the packages
