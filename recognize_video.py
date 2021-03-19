@@ -6,10 +6,12 @@
 from imutils.video import VideoStream
 from imutils.video import FPS
 from datetime import date
+from env_variables import firebaseConfig
 import numpy as np
 import argparse
 import imutils
 import pickle
+import pyrebase
 import time
 import cv2
 import os
@@ -51,6 +53,10 @@ time.sleep(2.0)
 rows = 480
 cols = 640
 
+# initlaize firebase connection
+firebase = pyrebase.initialize_app(firebaseConfig)
+db = firebase.database()
+
 # start the FPS throughput estimator
 fps = FPS().start()
 
@@ -58,6 +64,7 @@ fps = FPS().start()
 record_atendance = False
 attendance_list = []
 recorded = []
+subject = ""
 
 # loop over frames from the video file stream
 while True:
@@ -133,7 +140,7 @@ while True:
                 for studentDict in data["student"]:
                     if(studentDict["ID"] == name):
                         if(name not in recorded):
-                            student_dict = {"ID" : name, "name" : studentDict["name"], "time" : date.today(), "subject" : subject}
+                            student_dict = {"ID" : name, "name" : studentDict["name"], "time" : str(date.today()), "subject" : subject}
                             attendance_list.append(student_dict)
                             recorded.append(name)
             else:
@@ -163,6 +170,16 @@ while True:
 
     key = cv2.waitKey(1) & 0xFF
 
+    # if the `s` key was pressed, stop attendance recording
+    if key == ord("s"):
+        print(attendance_list)
+        attendance_dict = {subject : attendance_list}
+        db.child("attendance").push(attendance_dict)
+        record_atendance = False
+        attendance_list = []
+        recorded = []
+        subject = ""
+        
     # if the `q` key was pressed, break from the loop
     if key == ord("q"):
         break

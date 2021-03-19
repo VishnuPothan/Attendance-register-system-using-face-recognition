@@ -2,3 +2,5 @@
 output/
 dataset/*
 test_pyhton.py
+env_variables.py
+__pycache__
