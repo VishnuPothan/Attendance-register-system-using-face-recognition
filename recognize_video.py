@@ -13,6 +13,7 @@ import imutils
 import pickle
 import pyrebase
 import time
+from datetime import datetime
 import cv2
 import os
 import json
@@ -27,7 +28,7 @@ ap.add_argument("-r", "--recognizer", required=True,
                 help="path to model trained to recognize faces")
 ap.add_argument("-l", "--le", required=True,
                 help="path to label encoder")
-ap.add_argument("-c", "--confidence", type=float, default=0.85,
+ap.add_argument("-c", "--confidence", type=float, default=0.9,
                 help="minimum probability to filter weak detections")
 args = vars(ap.parse_args())
 
@@ -140,7 +141,9 @@ while True:
                 for studentDict in data["student"]:
                     if(studentDict["ID"] == name):
                         if(name not in recorded):
-                            student_dict = {"ID" : name, "name" : studentDict["name"], "time" : str(date.today()), "subject" : subject}
+                            now = datetime.now()
+                            current_time = now.strftime("%H:%M:%S")
+                            student_dict = {"ID" : name, "name" : studentDict["name"], "time" : str(current_time), "subject" : subject}
                             attendance_list.append(student_dict)
                             recorded.append(name)
             else:
@@ -174,7 +177,7 @@ while True:
     if key == ord("s"):
         print(attendance_list)
         attendance_dict = {subject : attendance_list}
-        db.child("attendance").push(attendance_dict)
+        db.child("attendance").child(str(date.today())).push(attendance_dict)
         record_atendance = False
         attendance_list = []
         recorded = []

@@ -1,6 +1,12 @@
-#output
-output/
+# image data
+output/*
 dataset/*
-test_pyhton.py
+
+# enviornment variables
 env_variables.py
+
+# caches
 __pycache__
+
+# delete these files
+TEMP/
