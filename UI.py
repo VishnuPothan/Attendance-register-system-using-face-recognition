@@ -36,22 +36,50 @@ rootAddTeacher = Tk()
 rootAddTeacher.title("Attendance Register Using Face Recognition")
 width, height = rootAddTeacher.winfo_screenwidth(), rootAddTeacher.winfo_screenheight()
 rootAddTeacher.geometry('%dx%d+0+0' % (width,height))
+rootAddTeacher.lift()
 
 #-----------------INITIALIZE TKINTER UI ADD STUDENT-------------------------------------------------------------------
 rootAddStudent = Tk() 
 rootAddStudent.title("Attendance Register Using Face Recognition")
 width, height = rootAddStudent.winfo_screenwidth(), rootAddStudent.winfo_screenheight()
 rootAddStudent.geometry('%dx%d+0+0' % (width,height))
+ 
+# Hide Windows
+rootAddTeacher.withdraw()
+rootAddStudent.withdraw()
 
 # variables
 nameTeacher = StringVar(rootAddTeacher)
 IDTeacher = StringVar(rootAddTeacher)
 subjectTeacher = StringVar(rootAddTeacher)
-nameStudent = StringVar()
-IDStudent = StringVar()
-subjectStudent = StringVar()
+
+nameStudent = StringVar(rootAddStudent)
+IDStudent = StringVar(rootAddStudent)
+
+teacherUIAdded = False
+studentUIAdded = False
 
 # Function Actions
+def OnClosing():
+    rootAddStudent.destroy()
+    rootAddTeacher.destroy()
+    root.destroy()
+
+def OnClosingAddTeacher():
+    rootAddTeacher.withdraw()
+
+def OnClosingAddStudent():
+    rootAddStudent.withdraw()
+
+def ResetTeacherWindow():
+    IDTeacher.set("")
+    nameTeacher.set("")
+    subjectTeacher.set("")
+
+def ResetStudentWindow():
+    IDStudent.set("")
+    nameStudent.set("")
+
 def CaptureImageTeacher():
     if (len(IDTeacher.get()) == 0):
         messagebox.showerror("Error", "Enter Teacher ID To Continue")
@@ -215,6 +243,10 @@ def AddNewTeacher():
     # write to realtime db firebase
     teacherDict = {"ID" : IDTeacher.get(), "name" : nameTeacher.get(), "subject" : subjectTeacher.get()}
     db.child("teacher").child(IDTeacher.get()).push(teacherDict)
+
+    # Reset Window
+    ResetTeacherWindow()
+    rootAddTeacher.withdraw()
 
 def CaptureImageStudent():
     if (len(IDStudent.get()) == 0):
@@ -380,9 +412,19 @@ def AddNewStudent():
     studentDict = {"ID" : IDStudent.get(), "name" : nameStudent.get()}
     db.child("student").child(IDStudent.get()).push(studentDict)
 
+    # Reset Sudent Window
+    ResetStudentWindow()
+    rootAddStudent.withdraw()
+
 # Funtions UI
 def UIAddTeacher():
+    rootAddTeacher.deiconify()
     rootAddTeacher.lift()
+    
+    global teacherUIAdded
+    if(teacherUIAdded):
+        return
+    teacherUIAdded = True
 
     #-----------------INFO TOP-----------------------------------------------------------------------------
     Tops = Frame(rootAddTeacher,bg="white",width = 1600,height=50,relief=SUNKEN)
@@ -447,7 +489,13 @@ def UIAddTeacher():
     rootAddTeacher.mainloop()
 
 def UIAddStudent():
-    rootAddStudent.lit()
+    rootAddStudent.deiconify()
+    rootAddStudent.lift()
+
+    global studentUIAdded
+    if(studentUIAdded):
+        return
+    studentUIAdded = True
 
     #-----------------INFO TOP-----------------------------------------------------------------------------
     Tops = Frame(rootAddStudent,bg="white",width = 1600,height=50,relief=SUNKEN)
@@ -455,6 +503,7 @@ def UIAddStudent():
 
     lblInfo = Label(Tops, font=( 'aria' ,30, 'bold' ),text="Attendance Register Using Face Recognition",fg="steel blue",bd=10,anchor='w')
     lblInfo.grid(row=0,column=0)
+
     lblInfo = Label(Tops, font=( 'aria' ,20, ),text="Add Student",fg="steel blue",anchor=W)
     lblInfo.grid(row=1,column=0)
     #-----------------FORM ITEMS---------------------------------------------------------------------------
@@ -468,7 +517,7 @@ def UIAddStudent():
     lblName = Label(f1, font=( 'aria' ,16, 'bold' ),text="Name",fg="steel blue",bd=10,anchor='w')
     lblName.grid(row=1,column=0)
 
-    txtName = Entry(f1,font=('ariel' ,16,'bold'), textvariable=name , bd=6,insertwidth=4,bg="powder blue" ,justify='right')
+    txtName = Entry(f1,font=('ariel' ,16,'bold'), textvariable=nameStudent , bd=6,insertwidth=4,bg="powder blue" ,justify='right')
     txtName.grid(row=1,column=1)
 
     # ID Input
@@ -478,24 +527,24 @@ def UIAddStudent():
     lblID = Label(f1, font=( 'aria' ,16, 'bold' ),text="ID",fg="steel blue",bd=10,anchor='w')
     lblID.grid(row=3,column=0)
 
-    txtID = Entry(f1,font=('ariel' ,16,'bold'), textvariable=ID , bd=6,insertwidth=4,bg="powder blue" ,justify='right')
+    txtID = Entry(f1,font=('ariel' ,16,'bold'), textvariable=IDStudent , bd=6,insertwidth=4,bg="powder blue" ,justify='right')
     txtID.grid(row=3,column=1) 
 
     #  Face input
     lblDash = Label(f1,text="---------------------",fg="white")
-    lblDash.grid(row=6,columnspan=3)
+    lblDash.grid(row=4,columnspan=3)
 
     lblFace = Label(f1, font=( 'aria' ,16, 'bold' ),text="Face",fg="steel blue",bd=10,anchor='w')
-    lblFace.grid(row=7,column=0)
+    lblFace.grid(row=5,column=0)
 
     btnFace = Button(f1,padx=16,pady=8, bd=6 ,fg="black",font=('ariel' ,16,'bold'),width=4, height=1, text="Capture", bg="grey",command = CaptureImageStudent)
-    btnFace.grid(row=7, column=1)
+    btnFace.grid(row=5, column=1)
 
     # Add Button
     lblDash = Label(f1,text="---------------------",fg="white")
-    lblDash.grid(row=4,columnspan=3)
+    lblDash.grid(row=6,columnspan=3)
 
-    btnStart = Button(f1,padx=16,pady=8, bd=10 ,fg="black",font=('ariel' ,16,'bold'),width=20, text="Add", bg="powder blue",command=None)
+    btnStart = Button(f1,padx=16,pady=8, bd=10 ,fg="black",font=('ariel' ,16,'bold'),width=20, text="Add", bg="powder blue",command=AddNewStudent)
     btnStart.grid(row=7, column=1)
 
     rootAddStudent.mainloop()
@@ -536,5 +585,9 @@ def MainFooter():
     btnViewStudent.grid(row=16, column=1)
 
     root.mainloop()
+
+rootAddStudent.protocol("WM_DELETE_WINDOW", OnClosingAddStudent)
+rootAddTeacher.protocol("WM_DELETE_WINDOW", OnClosingAddTeacher)
+root.protocol("WM_DELETE_WINDOW", OnClosing)
 
 MainFooter()
