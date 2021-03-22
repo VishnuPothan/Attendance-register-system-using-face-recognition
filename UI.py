@@ -416,6 +416,9 @@ def AddNewStudent():
     ResetStudentWindow()
     rootAddStudent.withdraw()
 
+def StartAttendance():
+    
+
 # Funtions UI
 def UIAddTeacher():
     rootAddTeacher.deiconify()
@@ -557,7 +560,7 @@ def MainFooter():
     lblDash = Label(f1,text="---------------------",fg="black")
     lblDash.grid(row=6,columnspan=3)
 
-    btnStart = Button(f1,padx=16,pady=8, bd=10 ,fg="black",font=('ariel' ,16,'bold'),width=20, text="Start Attendance", bg="powder blue",command=None)
+    btnStart = Button(f1,padx=16,pady=8, bd=10 ,fg="black",font=('ariel' ,16,'bold'),width=20, text="Start Attendance", bg="powder blue",command=StartAttendance)
     btnStart.grid(row=8, column=1)
 
     lblDash = Label(f1,text="---------------------",fg="white")
