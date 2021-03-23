@@ -8,6 +8,8 @@ import numpy as np
 import threading
 import datetime
 import imutils
+import pyrebase
+from env_variables import firebaseConfig
 import json
 import cv2
 import os
@@ -62,6 +64,9 @@ class PhotoBoothApp:
 			recorded = []
 			subject = ""
 
+			# initlaize firebase connection
+			firebase = pyrebase.initialize_app(firebaseConfig)
+			db = firebase.database()
 			# keep looping over frames until we are instructed to stop
 			while not self.stopEvent.is_set():
 
@@ -184,7 +189,7 @@ class PhotoBoothApp:
 				if key == ord("s"):
 					print(attendance_list)
 					attendance_dict = {subject : attendance_list}
-					#db.child("attendance").child(str(date.today())).push(attendance_dict)
+					db.child("attendance").child(str(datetime.date.today())).push(attendance_dict)
 					record_atendance = False
 					attendance_list = []
 					recorded = []
@@ -203,16 +208,6 @@ class PhotoBoothApp:
 		except RuntimeError:
 			print("[INFO] caught a RuntimeError")
 
-	def takeSnapshot(self):
-		# grab the current timestamp and use it to construct the
-		# output path
-		ts = datetime.datetime.now()
-		filename = "{}.jpg".format(ts.strftime("%Y-%m-%d_%H-%M-%S"))
-		p = os.path.sep.join((self.outputPath, filename))
-		# save the file
-		cv2.imwrite(p, self.frame.copy())
-		print("[INFO] saved {}".format(filename))
-
 	def onClose(self):
 		# set the stop event, cleanup the camera, and allow the rest of
 		# the quit process to continue
@@ -220,6 +215,7 @@ class PhotoBoothApp:
 		self.stopEvent.set()
 		self.vs.stop()
 		self.rootAttendance.quit()
+		cv2.destroyAllWindows()
 
 	def MainLoop(self):
 		self.rootAttendance.mainloop()
