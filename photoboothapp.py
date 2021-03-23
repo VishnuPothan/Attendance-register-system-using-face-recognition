@@ -12,7 +12,6 @@ import json
 import cv2
 import os
 
-
 class PhotoBoothApp:
 	def __init__(self, vs, outputPath, detector, embedder, recognizer, le):
 		# store the video stream object and output path, then initialize
@@ -27,22 +26,16 @@ class PhotoBoothApp:
 		self.embedder = embedder
 		self.recognizer = recognizer
 		self.le = le
+		self.i = 4
 
 		# initialize the root window and image panel
-		self.root = tki.Tk()
+		self.rootAttendance = tki.Toplevel()
 		self.panel = None
 		self.labelAttendance = None
 
-		self.f1 = Frame(self.root,width = 900,height=700,relief=SUNKEN)
-		self.f1.pack(side=TOP)
-
-		lblName = Label(self.f1, font=( 'aria' ,16, 'bold' ),text="Name",fg="steel blue",bd=10,anchor='w')
-		lblName.grid(row=1,column=0)
-
 		# create a button, that when pressed, will take the current
 		# frame and save it to file
-		btn = tki.Button(self.root, text="Snapshot!", command=self.takeSnapshot)
-		btn.pack(side="bottom", fill="both", expand="yes", padx=10, pady=10)
+		self.btn = tki.Button(self.rootAttendance, text="Stop Recording", command =lambda : self.stopEvent.set()).grid(row=1, column=0)
 
 		# start a thread that constantly pools the video sensor for
 		# the most recently read frame
@@ -51,8 +44,15 @@ class PhotoBoothApp:
 		self.thread.start()
 
 		# set a callback to handle when the window is closed
-		self.root.wm_title("Attendance Record")
-		self.root.wm_protocol("WM_DELETE_WINDOW", self.onClose)
+		self.rootAttendance.wm_title("Attendance Record")
+		self.rootAttendance.wm_protocol("WM_DELETE_WINDOW", self.onClose)
+
+	def DisplayAttendance(self, studentDetailsList):
+		for j in range(len(studentDetailsList)): 
+			self.e = Entry(self.rootAttendance, width=20, fg='powder blue', font=('Arial',12,'bold')) 
+			self.e.grid(row=self.i+3, column=j) 
+			self.e.insert(END, studentDetailsList[j])
+		self.i += 1
 
 	def videoLoop(self):
 		try:
@@ -68,7 +68,7 @@ class PhotoBoothApp:
 				# grab the frame from the video stream and resize it to
 				# have a maximum width of 640 pixels
 				self.frame = self.vs.read()
-				self.frame = imutils.resize(self.frame, width=640)
+				self.frame = imutils.resize(self.frame, width=300)
 				frameLoc = self.frame
 				(h, w) = frameLoc.shape[:2]
 
@@ -137,6 +137,7 @@ class PhotoBoothApp:
 										current_time = now.strftime("%H:%M:%S")
 										student_dict = {"ID" : name, "name" : studentDict["name"], "time" : str(current_time), "subject" : subject}
 										attendance_list.append(student_dict)
+										self.DisplayAttendance(list(student_dict.values()))
 										recorded.append(name)
 						else:
 							# check if teacher
@@ -170,15 +171,13 @@ class PhotoBoothApp:
 
 				# if the panel is not None, we need to initialize it
 				if self.panel is None:
-					self.panel = tki.Label(image=image)
+					self.panel = tki.Label(self.rootAttendance, image=image)
 					self.panel.image = image
-					self.panel.pack(side="left", padx=10, pady=10)
-
+					self.panel.grid(row=0, column=0)
 				# otherwise, simply update the panel
 				else:
 					self.panel.configure(image=image)
 					self.panel.image = image
-
 				key = cv2.waitKey(1) & 0xFF
 
 				# if the `s` key was pressed, stop attendance recording
@@ -220,4 +219,7 @@ class PhotoBoothApp:
 		print("[INFO] closing...")
 		self.stopEvent.set()
 		self.vs.stop()
-		self.root.quit()
+		self.rootAttendance.quit()
+
+	def MainLoop(self):
+		self.rootAttendance.mainloop()

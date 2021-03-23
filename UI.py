@@ -6,12 +6,14 @@ from imutils.video import FPS
 from sklearn.svm import SVC
 from tkinter import messagebox
 from imutils import paths
+from photoboothapp import PhotoBoothApp
 import pyrebase
 from tkinter import*
 import numpy as np
 import imutils
 import pickle
 import json
+import time
 import cv2
 import os
 
@@ -417,7 +419,33 @@ def AddNewStudent():
     rootAddStudent.withdraw()
 
 def StartAttendance():
-    
+    # initialize the video stream and allow the camera sensor to warmup
+    print("[INFO] warming up camera...")
+    vs = VideoStream().start()
+    time.sleep(2.0)
+
+    detectorPath = "model"
+    embeddingModelPath = "model/openface_nn4.small2.v1.t7"
+    recognizerPath = "output/face_recognizer.pickle"
+    labelPath = "output/face_label.pickle"
+
+    # load our serialized face detector from disk
+    print("[INFO] loading face detector...")
+    protoPath = os.path.sep.join([detectorPath, "deploy.prototxt"])
+    modelPath = os.path.sep.join([detectorPath, "res10_300x300_ssd_iter_140000.caffemodel"])
+    detector = cv2.dnn.readNetFromCaffe(protoPath, modelPath)
+
+    # load our serialized face embedding model from disk
+    print("[INFO] loading face recognizer...")
+    embedder = cv2.dnn.readNetFromTorch(embeddingModelPath)
+
+    # load the actual face recognition model along with the label encoder
+    recognizer = pickle.loads(open(recognizerPath, "rb").read())
+    le = pickle.loads(open(labelPath, "rb").read())
+
+    # start the app
+    pba = PhotoBoothApp(vs, "output", detector, embedder, recognizer, le)
+    pba.MainLoop()
 
 # Funtions UI
 def UIAddTeacher():
