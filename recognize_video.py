@@ -51,8 +51,6 @@ le = pickle.loads(open(args["le"], "rb").read())
 print("[INFO] starting video stream...")
 vs = VideoStream(src=0).start()
 time.sleep(2.0)
-rows = 480
-cols = 640
 
 # initlaize firebase connection
 firebase = pyrebase.initialize_app(firebaseConfig)
@@ -195,5 +193,6 @@ print("[INFO] elasped time: {:.2f}".format(fps.elapsed()))
 print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
 
 # do a bit of cleanup
+
+vs.stream.release()
 cv2.destroyAllWindows()
-vs.stop()
