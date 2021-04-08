@@ -74,10 +74,10 @@ class HomeScreen():
         self.btnViewStudent.grid(row=16, column=1)
 
         self.lblDash = Label(self.f1,text="---------------------",fg="white")
-        self.lblDash.grid(row=9,columnspan=3)
+        self.lblDash.grid(row=17,columnspan=3)
 
         self.btnAddClass = Button(self.f1,padx=16,pady=8, bd=10 ,fg="black",font=('ariel' ,16,'bold'),width=20, text="Add Class", bg="powder blue",command = self.AddClassPressed)
-        self.btnAddClass.grid(row=10, column=1)
+        self.btnAddClass.grid(row=18, column=1)
 
         self.root.mainloop()
 
@@ -334,7 +334,7 @@ class AddTeacher():
 
         # write to realtime db firebase
         self.teacherDict = {"ID" : self.IDTeacher.get(), "name" : self.nameTeacher.get(), "subject" : self.subjectTeacher.get()}
-        self.db.child("teacher").child(self.IDTeacher.get()).push(self.teacherDict)
+        self.db.child("class").child("S8CSE").child("teacher").child(self.IDTeacher.get()).set(self.teacherDict)
 
         # Reset Window
         #ResetTeacherWindow()
