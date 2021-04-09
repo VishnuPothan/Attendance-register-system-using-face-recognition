@@ -2,22 +2,22 @@
 from sklearn.preprocessing import LabelEncoder
 from env_variables import firebaseConfig
 from imutils.video import VideoStream
-from PIL import  Image as Img
-from PIL import ImageTk
-from imutils.video import FPS
-from sklearn.svm import SVC
 from tkinter import messagebox
-from imutils import paths
+from PIL import  Image as Img
+from imutils.video import FPS
 from tkinter import Tk, Label
-import pyrebase
-from tkinter import *
+from sklearn.svm import SVC
+from imutils import paths
+from PIL import ImageTk
 import tkinter as tki
+from tkinter import *
 import numpy as np
-import imutils
 import datetime
+import pyrebase
+import imutils
 import pickle
-import json
 import time
+import json
 import cv2
 import os
 
@@ -332,9 +332,14 @@ class AddTeacher():
         self.firebase = pyrebase.initialize_app(firebaseConfig)
         self.db = self.firebase.database()
 
+        # read data from local data
+        self.fp = open("local_data.txt", "r")
+        self.classID = self.fp.read().split("/")[0]
+
         # write to realtime db firebase
-        self.teacherDict = {"ID" : self.IDTeacher.get(), "name" : self.nameTeacher.get(), "subject" : self.subjectTeacher.get()}
-        self.db.child("class").child("S8CSE").child("teacher").child(self.IDTeacher.get()).set(self.teacherDict)
+        self.teacherDict = {"ID" : self.IDTeacher.get(), "name" : self.nameTeacher.get(), "subject" : self.subjectTeacher.get(), }
+        self.db.child("teacher").child(self.IDTeacher.get()).set(self.teacherDict)
+        self.db.child("class").child(self.classID).child(self.IDTeacher.get()).set(self.teacherDict)
 
         # Reset Window
         #ResetTeacherWindow()
@@ -775,7 +780,6 @@ class AddClass():
         # variables
         self.nameClass = StringVar(self.rootAddClass)
         self.lateTime = StringVar(self.rootAddClass)
-        self.hoursPerDay = StringVar(self.rootAddClass)
 
         #-----------------INFO TOP-----------------------------------------------------------------------------
         self.Tops = Frame(self.rootAddClass,bg="white",width = 1600,height=50,relief=SUNKEN)
@@ -810,16 +814,6 @@ class AddClass():
         self.txtLateTime = Entry(self.f1,font=('ariel' ,16,'bold'), textvariable = self.lateTime , bd=6,insertwidth=4,bg="powder blue" ,justify='right')
         self.txtLateTime.grid(row=3,column=1)
 
-        # Hours input
-        self.lblDash = Label(self.f1,text="---------------------",fg="white")
-        self.lblDash.grid(row=4,columnspan=3)
-
-        self.lblHoursPerDat = Label(self.f1, font=( 'aria' ,16, 'bold' ),text="Hours Per Day",fg="steel blue",bd=10,anchor='w')
-        self.lblHoursPerDat.grid(row=5,column=0)
-
-        self.txtHoursPerDat = Entry(self.f1,font=('ariel' ,16,'bold'), textvariable = self.hoursPerDay , bd=6,insertwidth=4,bg="powder blue" ,justify='right')
-        self.txtHoursPerDat.grid(row=5,column=1)
-
         # Add Button
         self.lblDash = Label(self.f1,text="---------------------",fg="white")
         self.lblDash.grid(row=8,columnspan=3)
@@ -830,7 +824,7 @@ class AddClass():
         self.rootAddClass.mainloop()
 
     def AddNewClass(self):
-        if (len(self.nameClass.get()) == 0 or len(self.lateTime.get()) == 0 or len(self.hoursPerDay.get()) == 0):
+        if (len(self.nameClass.get()) == 0 or len(self.lateTime.get()) == 0):
             messagebox.showerror("Error", "Enter Class Details To Continue")
             return
         
@@ -840,8 +834,13 @@ class AddClass():
         self.db = self.firebase.database()
 
         # write to realtime db firebase
-        self.classDict = {"name" : self.nameClass.get(), "late" : self.lateTime.get(), 'hours' : self.hoursPerDay.get()}
+        self.classDict = {"name" : self.nameClass.get(), "late" : self.lateTime.get()}
         self.db.child("class").child(self.nameClass.get()).set(self.classDict)
+
+        # store data in local storage
+        self.fp = open("local_data.txt", "w")
+        self.fp.write(self.nameClass.get() + "/" + self.lateTime.get())
+        self.fp.close()
 
         # Reset Window
         self.rootAddClass.destroy()

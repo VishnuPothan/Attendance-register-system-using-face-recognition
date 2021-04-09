@@ -4,6 +4,7 @@ dataset/*
 
 # enviornment variables
 env_variables.py
+local_data.txt
 
 # caches
 __pycache__
