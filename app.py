@@ -64,13 +64,13 @@ class HomeScreen():
         self.lblDash = Label(self.f1,text="---------------------",fg="white")
         self.lblDash.grid(row=13,columnspan=3)
 
-        self.btnViewTeacher= Button(self.f1,padx=16,pady=8, bd=10 ,fg="black",font=('ariel' ,16,'bold'),width=20, text="View Teachers", bg="powder blue",command=None)
+        self.btnViewTeacher= Button(self.f1,padx=16,pady=8, bd=10 ,fg="black",font=('ariel' ,16,'bold'),width=20, text="View Teachers", bg="powder blue",command = self.ViewTeacherPressed)
         self.btnViewTeacher.grid(row=14, column=1)
 
         self.lblDash = Label(self.f1,text="---------------------",fg="white")
         self.lblDash.grid(row=15,columnspan=3)
 
-        self.btnViewStudent = Button(self.f1,padx=16,pady=8, bd=10 ,fg="black",font=('ariel' ,16,'bold'),width=20, text="View Students", bg="powder blue",command=None)
+        self.btnViewStudent = Button(self.f1,padx=16,pady=8, bd=10 ,fg="black",font=('ariel' ,16,'bold'),width=20, text="View Students", bg="powder blue",command = self.ViewStudentPressed)
         self.btnViewStudent.grid(row=16, column=1)
 
         self.lblDash = Label(self.f1,text="---------------------",fg="white")
@@ -89,6 +89,12 @@ class HomeScreen():
     
     def StartAttendancePressed(self):
         self.startAttendance = StartAttendance()
+
+    def ViewTeacherPressed(self):
+        self.viewTeacher = ViewTeacher()
+
+    def ViewStudentPressed(self):
+        self.viewStudent = ViewTeacher()
 
     def AddClassPressed(self):
         self.addClass = AddClass()
@@ -568,6 +574,11 @@ class AddStudent():
         self.f.write(pickle.dumps(self.le))
         self.f.close()
 
+        # TODO remove only for test
+        print("reco model : " + self.recognizer)
+        print("  ");
+        print("reco model : " + self.le)
+        
         # write data to firebase
         # initlaize firebase connection
         self.firebase = pyrebase.initialize_app(firebaseConfig)
@@ -767,6 +778,97 @@ class StartAttendance():
         self.cap.stream.release()
         cv2.destroyAllWindows() """
 
+# VIEW TEACHER
+class ViewTeacher():
+    def __init__(self):
+        #-----------------INITIALIZE TKINTER UI ADD TEACHER-------------------------------------------------------------------
+        self.rootViewTeacher = Tk() 
+        self.rootViewTeacher.title("Attendance Register Using Face Recognition")
+        self.width, self.height = self.rootViewTeacher.winfo_screenwidth(), self.rootViewTeacher.winfo_screenheight()
+        self.rootViewTeacher.geometry('%dx%d+0+0' % (self.width,self.height))
+        self.rootViewTeacher.lift()
+
+        #-----------------INFO TOP-----------------------------------------------------------------------------
+        self.Tops = Frame(self.rootViewTeacher,bg="white",width = 1600,height=50,relief=SUNKEN)
+        self.Tops.pack(side=TOP)
+
+        self.lblInfo = Label(self.Tops, font=( 'aria' ,30, 'bold' ),text="Attendance Register Using Face Recognition",fg="steel blue",bd=10,anchor='w')
+        self.lblInfo.grid(row=0,column=0)
+        self.lblInfo = Label(self.Tops, font=( 'aria' ,20, ),text="View Teacher",fg="steel blue",anchor=W)
+        self.lblInfo.grid(row=1,column=0)
+
+        #-----------------FORM ITEMS--------------------------------------------------------------------------------------------
+        self.f1 = Frame(self.rootViewTeacher,width = 900,height=700,relief=SUNKEN)
+        self.f1.pack(side=TOP)
+
+        # read data from firebase
+        # initlaize firebase connection
+        self.firebase = pyrebase.initialize_app(firebaseConfig)
+        self.db = self.firebase.database()
+
+        self.values = self.db.child('teacher').get().val()
+
+        self.row = 0
+        self.column = 0
+
+        # table header
+        self.lblDash = Label(self.f1,text="------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------",fg="black")
+        self.lblDash.grid(row = self.row, columnspan=8)
+
+        self.row = self.row + 1
+
+        self.label = Label(self.f1, font=( 'aria' ,16, 'bold' ),text = "Teacher ID" ,fg="black",bd=10,anchor='w')
+        self.label.grid(row = self.row,column = 1)
+
+        self.label = Label(self.f1, font=( 'aria' ,16, 'bold' ),text = "    |     " ,fg="black",bd=10,anchor='w')
+        self.label.grid(row = self.row,column = 2)
+
+        self.label = Label(self.f1, font=( 'aria' ,16, 'bold' ),text = "Name" ,fg="black",bd=10,anchor='w')
+        self.label.grid(row = self.row,column = 3)
+
+        self.label = Label(self.f1, font=( 'aria' ,16, 'bold' ),text = "    |     " ,fg="black",bd=10,anchor='w')
+        self.label.grid(row = self.row,column = 4)
+
+        self.label = Label(self.f1, font=( 'aria' ,16, 'bold' ),text = "Subjecct" ,fg="black",bd=10,anchor='w')
+        self.label.grid(row = self.row,column = 5) 
+
+        self.label = Label(self.f1, font=( 'aria' ,16, 'bold' ),text = "    |     " ,fg="black",bd=10,anchor='w')
+        self.label.grid(row = self.row,column = 6)
+
+        self.row = self.row + 1
+
+        for key, value in self.values.items():
+            self.lblDash = Label(self.f1,text="------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------",fg="black")
+            self.lblDash.grid(row = self.row,columnspan = 8)
+
+            self.row = self.row + 1
+
+            self.label = Label(self.f1, font=( 'aria' ,16, 'bold' ),text = key ,fg="steel blue",bd=10,anchor='w')
+            self.label.grid(row = self.row,column = 1)
+
+            self.label = Label(self.f1, font=( 'aria' ,16, 'bold' ),text = "    |     " ,fg="black",bd=10,anchor='w')
+            self.label.grid(row = self.row,column = 2)
+
+            self.label = Label(self.f1, font=( 'aria' ,16, 'bold' ),text = value['name'] ,fg="steel blue",bd=10,anchor='w')
+            self.label.grid(row = self.row,column = 3)
+
+            self.label = Label(self.f1, font=( 'aria' ,16, 'bold' ),text = "    |     " ,fg="black",bd=10,anchor='w')
+            self.label.grid(row = self.row,column = 4)
+
+            self.label = Label(self.f1, font=( 'aria' ,16, 'bold' ),text = value['subject'] ,fg="steel blue",bd=10,anchor='w')
+            self.label.grid(row = self.row,column = 5) 
+
+            self.label = Label(self.f1, font=( 'aria' ,16, 'bold' ),text = "    |     " ,fg="black",bd=10,anchor='w')
+            self.label.grid(row = self.row,column = 6)
+
+            self.row = self.row + 1
+        
+        self.lblDash = Label(self.f1,text="------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------",fg="black")
+        self.lblDash.grid(row = self.row,columnspan = 8)
+
+        self.rootViewTeacher.mainloop()
+
+
 # ADD CLASS
 class AddClass():
     def __init__(self):
@@ -787,7 +889,7 @@ class AddClass():
 
         self.lblInfo = Label(self.Tops, font=( 'aria' ,30, 'bold' ),text="Attendance Register Using Face Recognition",fg="steel blue",bd=10,anchor='w')
         self.lblInfo.grid(row=0,column=0)
-        self.lblInfo = Label(self.Tops, font=( 'aria' ,20, ),text="Add Teacher",fg="steel blue",anchor=W)
+        self.lblInfo = Label(self.Tops, font=( 'aria' ,20, ),text="Add Class",fg="steel blue",anchor=W)
         self.lblInfo.grid(row=1,column=0)
 
         #-----------------FORM ITEMS--------------------------------------------------------------------------------------------
@@ -834,7 +936,7 @@ class AddClass():
         self.db = self.firebase.database()
 
         # write to realtime db firebase
-        self.classDict = {"name" : self.nameClass.get(), "late" : self.lateTime.get()}
+        self.classDict = {"name" : self.nameClass.get(), "late time" : self.lateTime.get()}
         self.db.child("class").child(self.nameClass.get()).set(self.classDict)
 
         # store data in local storage
