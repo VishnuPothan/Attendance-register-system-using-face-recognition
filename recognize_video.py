@@ -56,6 +56,11 @@ time.sleep(2.0)
 firebase = pyrebase.initialize_app(firebaseConfig)
 db = firebase.database()
 
+# DETAILS FETCHED FROM FIREBASE
+teacherDetailsDict = db.child('teacher').get().val()
+studentDetailsDict  = db.child('student').get().val()
+
+
 # start the FPS throughput estimator
 fps = FPS().start()
 
@@ -121,10 +126,7 @@ while True:
             proba = preds[j]
             name = le.classes_[j]
 
-            # teacher face check
-            with open('dataset/teacher_data.json') as teacherFile:
-                data = json.load(teacherFile)
-                    
+            # Identify details       
             if(record_atendance):
                 # draw the bounding box
                 text = "{}: {:.2f}%".format(name, proba * 100)
@@ -133,10 +135,7 @@ while True:
                 cv2.putText(frame, text, (startX, y),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 255), 2)
 
-                # record attendance to file
-                with open('dataset/student_data.json') as studentFile:
-                    data = json.load(studentFile)
-                for studentDict in data["student"]:
+                for studentDict in studentDetailsDict:
                     if(studentDict["ID"] == name):
                         if(name not in recorded):
                             now = datetime.now()
@@ -146,7 +145,7 @@ while True:
                             recorded.append(name)
             else:
                 # check if teacher
-                for teacherDict in data["teacher"]:
+                for teacherDict in teacherDetailsDict:
 
                     if(teacherDict["ID"] == name):
 

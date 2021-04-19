@@ -21,6 +21,13 @@ import json
 import cv2
 import os
 
+# DETAILS FETCHED FROM FIREBASE
+firebase = pyrebase.initialize_app(firebaseConfig)
+db = firebase.database()
+teacherDetailsDict = db.child('teacher').get().val()
+studentDetailsDict  = db.child('student').get().val()
+
+
 # HOME SCREEN
 class HomeScreen():
     def __init__(self):
@@ -114,6 +121,7 @@ class AddTeacher():
         self.nameTeacher = StringVar(self.rootAddTeacher)
         self.IDTeacher = StringVar(self.rootAddTeacher)
         self.subjectTeacher = StringVar(self.rootAddTeacher)
+        self.phoneTeacher = StringVar(self.rootAddTeacher)
 
         #-----------------INFO TOP-----------------------------------------------------------------------------
         self.Tops = Frame(self.rootAddTeacher,bg="white",width = 1600,height=50,relief=SUNKEN)
@@ -157,6 +165,16 @@ class AddTeacher():
 
         self.txtSubject = Entry(self.f1,font=('ariel' ,16,'bold'), textvariable = self.subjectTeacher , bd=6,insertwidth=4,bg="powder blue" ,justify='right')
         self.txtSubject.grid(row=5,column=1)
+
+        # Phone input
+        self.lblDash = Label(self.f1,text="---------------------",fg="white")
+        self.lblDash.grid(row=4,columnspan=3)
+
+        self.lblPhone = Label(self.f1, font=( 'aria' ,16, 'bold' ),text="Phone",fg="steel blue",bd=10,anchor='w')
+        self.lblPhone.grid(row=5,column=0)
+
+        self.txtPhone = Entry(self.f1,font=('ariel' ,16,'bold'), textvariable = self.phoneTeacher , bd=6,insertwidth=4,bg="powder blue" ,justify='right')
+        self.txtPhone.grid(row=5,column=1)
 
         #  Face input 
         self.lblDash = Label(self.f1,text="---------------------",fg="white")
@@ -217,7 +235,7 @@ class AddTeacher():
         cv2.destroyAllWindows()
 
     def AddNewTeacher(self):
-        if (len(self.IDTeacher.get()) == 0 or len(self.nameTeacher.get()) == 0 or len(self.subjectTeacher.get()) == 0):
+        if (len(self.IDTeacher.get()) == 0 or len(self.nameTeacher.get()) == 0 or len(self.subjectTeacher.get()) == 0 or len(self.phoneTeacher.get() != 10)):
             messagebox.showerror("Error", "Enter Teacher Details To Continue")
             return
 
@@ -343,7 +361,7 @@ class AddTeacher():
         self.classID = self.fp.read().split("/")[0]
 
         # write to realtime db firebase
-        self.teacherDict = {"ID" : self.IDTeacher.get(), "name" : self.nameTeacher.get(), "subject" : self.subjectTeacher.get(), }
+        self.teacherDict = {"ID" : self.IDTeacher.get(), "name" : self.nameTeacher.get(), "subject" : self.subjectTeacher.get(), "phone" : self.phoneTeacher.get()}
         self.db.child("teacher").child(self.IDTeacher.get()).set(self.teacherDict)
         self.db.child("class").child(self.classID).child(self.IDTeacher.get()).set(self.teacherDict)
 
@@ -365,6 +383,7 @@ class AddStudent():
         # variables
         self.nameStudent = StringVar(self.rootAddStudent)
         self.IDStudent = StringVar(self.rootAddStudent)
+        self.phoneStudent = StringVar(self.rootAddStudent)
 
         #-----------------INFO TOP-----------------------------------------------------------------------------
         self.Tops = Frame(self.rootAddStudent,bg="white",width = 1600,height=50,relief=SUNKEN)
@@ -398,6 +417,16 @@ class AddStudent():
 
         self.txtID = Entry(self.f1,font=('ariel' ,16,'bold'), textvariable = self.IDStudent , bd=6,insertwidth=4,bg="powder blue" ,justify='right')
         self.txtID.grid(row=3,column=1)
+
+        # Phone input
+        self.lblDash = Label(self.f1,text="---------------------",fg="white")
+        self.lblDash.grid(row=4,columnspan=3)
+
+        self.lblPhone = Label(self.f1, font=( 'aria' ,16, 'bold' ),text="Phone",fg="steel blue",bd=10,anchor='w')
+        self.lblPhone.grid(row=5,column=0)
+
+        self.txtPhone = Entry(self.f1,font=('ariel' ,16,'bold'), textvariable = self.phoneStudent , bd=6,insertwidth=4,bg="powder blue" ,justify='right')
+        self.txtPhone.grid(row=5,column=1)
 
         #  Face input 
         self.lblDash = Label(self.f1,text="---------------------",fg="white")
@@ -458,7 +487,7 @@ class AddStudent():
         cv2.destroyAllWindows()
 
     def AddNewStudent(self):
-        if (len(self.IDStudent.get()) == 0 or len(self.nameStudent.get()) == 0):
+        if (len(self.IDStudent.get()) == 0 or len(self.nameStudent.get()) == 0 or len(self.phoneStudent) != 10):
             messagebox.showerror("Error", "Enter Student Details To Continue")
             return
 
@@ -573,23 +602,23 @@ class AddStudent():
         self.f = open(self.lePickle, "wb")
         self.f.write(pickle.dumps(self.le))
         self.f.close()
-
-        # TODO remove only for test
-        print("reco model : " + self.recognizer)
-        print("  ");
-        print("reco model : " + self.le)
         
         # write data to firebase
         # initlaize firebase connection
         self.firebase = pyrebase.initialize_app(firebaseConfig)
         self.db = self.firebase.database()
 
+        # read data from local data
+        self.fp = open("local_data.txt", "r")
+        self.classID = self.fp.read().split("/")[0]
+
         # write to realtime db firebase
-        self.studentDict = {"ID" : self.IDStudent.get(), "name" : self.nameStudent.get()}
-        self.db.child("student").child(self.IDStudent.get()).push(self.studentDict)
+        self.studentDict = {"ID" : self.IDStudent.get(), "name" : self.nameStudent.get(), "phone" : self.phoneStudent.get()}
+        self.db.child("student").child(self.IDStudent.get()).set(self.studentDict)
+        self.db.child("class").child(self.classID).child(self.IDStudent.get()).set(self.teacherDict)
 
         # Reset Window
-        #ResetStudentWindow()
+        # ResetStudentWindow()
         self.rootAddStudent.destroy()
 
 # START ATTENDANCE
@@ -835,6 +864,12 @@ class ViewTeacher():
         self.label = Label(self.f1, font=( 'aria' ,16, 'bold' ),text = "    |     " ,fg="black",bd=10,anchor='w')
         self.label.grid(row = self.row,column = 6)
 
+        self.label = Label(self.f1, font=( 'aria' ,16, 'bold' ),text = "Phone" ,fg="black",bd=10,anchor='w')
+        self.label.grid(row = self.row,column = 5) 
+
+        self.label = Label(self.f1, font=( 'aria' ,16, 'bold' ),text = "    |     " ,fg="black",bd=10,anchor='w')
+        self.label.grid(row = self.row,column = 6)
+
         self.row = self.row + 1
 
         for key, value in self.values.items():
@@ -859,6 +894,12 @@ class ViewTeacher():
             self.label.grid(row = self.row,column = 5) 
 
             self.label = Label(self.f1, font=( 'aria' ,16, 'bold' ),text = "    |     " ,fg="black",bd=10,anchor='w')
+            self.label.grid(row = self.row,column = 4)
+
+            self.label = Label(self.f1, font=( 'aria' ,16, 'bold' ),text = value['phone'] ,fg="steel blue",bd=10,anchor='w')
+            self.label.grid(row = self.row,column = 5) 
+
+            self.label = Label(self.f1, font=( 'aria' ,16, 'bold' ),text = "    |     " ,fg="black",bd=10,anchor='w')
             self.label.grid(row = self.row,column = 6)
 
             self.row = self.row + 1
@@ -868,7 +909,95 @@ class ViewTeacher():
 
         self.rootViewTeacher.mainloop()
 
+# VIEW TEACHER
+class ViewStudent():
+    def __init__(self):
+        #-----------------INITIALIZE TKINTER UI ADD TEACHER-------------------------------------------------------------------
+        self.rootViewStudent = Tk() 
+        self.rootViewStudent.title("Attendance Register Using Face Recognition")
+        self.width, self.height = self.rootViewStudent.winfo_screenwidth(), self.rootViewStudent.winfo_screenheight()
+        self.rootViewStudent.geometry('%dx%d+0+0' % (self.width,self.height))
+        self.rootViewStudent.lift()
 
+        #-----------------INFO TOP-----------------------------------------------------------------------------
+        self.Tops = Frame(self.rootViewStudent,bg="white",width = 1600,height=50,relief=SUNKEN)
+        self.Tops.pack(side=TOP)
+
+        self.lblInfo = Label(self.Tops, font=( 'aria' ,30, 'bold' ),text="Attendance Register Using Face Recognition",fg="steel blue",bd=10,anchor='w')
+        self.lblInfo.grid(row=0,column=0)
+        self.lblInfo = Label(self.Tops, font=( 'aria' ,20, ),text="View Student",fg="steel blue",anchor=W)
+        self.lblInfo.grid(row=1,column=0)
+
+        #-----------------FORM ITEMS--------------------------------------------------------------------------------------------
+        self.f1 = Frame(self.rootViewStudent,width = 900,height=700,relief=SUNKEN)
+        self.f1.pack(side=TOP)
+
+        # read data from firebase
+        # initlaize firebase connection
+        self.firebase = pyrebase.initialize_app(firebaseConfig)
+        self.db = self.firebase.database()
+
+        self.values = self.db.child('student').get().val()
+
+        self.row = 0
+        self.column = 0
+
+        # table header
+        self.lblDash = Label(self.f1,text="------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------",fg="black")
+        self.lblDash.grid(row = self.row, columnspan=8)
+
+        self.row = self.row + 1
+
+        self.label = Label(self.f1, font=( 'aria' ,16, 'bold' ),text = "Teacher ID" ,fg="black",bd=10,anchor='w')
+        self.label.grid(row = self.row,column = 1)
+
+        self.label = Label(self.f1, font=( 'aria' ,16, 'bold' ),text = "    |     " ,fg="black",bd=10,anchor='w')
+        self.label.grid(row = self.row,column = 2)
+
+        self.label = Label(self.f1, font=( 'aria' ,16, 'bold' ),text = "Name" ,fg="black",bd=10,anchor='w')
+        self.label.grid(row = self.row,column = 3)
+
+        self.label = Label(self.f1, font=( 'aria' ,16, 'bold' ),text = "    |     " ,fg="black",bd=10,anchor='w')
+        self.label.grid(row = self.row,column = 4)
+
+        self.label = Label(self.f1, font=( 'aria' ,16, 'bold' ),text = "Phone" ,fg="black",bd=10,anchor='w')
+        self.label.grid(row = self.row,column = 5) 
+
+        self.label = Label(self.f1, font=( 'aria' ,16, 'bold' ),text = "    |     " ,fg="black",bd=10,anchor='w')
+        self.label.grid(row = self.row,column = 6)
+
+        self.row = self.row + 1
+
+        for key, value in self.values.items():
+            self.lblDash = Label(self.f1,text="------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------",fg="black")
+            self.lblDash.grid(row = self.row,columnspan = 8)
+
+            self.row = self.row + 1
+
+            self.label = Label(self.f1, font=( 'aria' ,16, 'bold' ),text = key ,fg="steel blue",bd=10,anchor='w')
+            self.label.grid(row = self.row,column = 1)
+
+            self.label = Label(self.f1, font=( 'aria' ,16, 'bold' ),text = "    |     " ,fg="black",bd=10,anchor='w')
+            self.label.grid(row = self.row,column = 2)
+
+            self.label = Label(self.f1, font=( 'aria' ,16, 'bold' ),text = value['name'] ,fg="steel blue",bd=10,anchor='w')
+            self.label.grid(row = self.row,column = 3)
+
+            self.label = Label(self.f1, font=( 'aria' ,16, 'bold' ),text = "    |     " ,fg="black",bd=10,anchor='w')
+            self.label.grid(row = self.row,column = 4)
+
+            self.label = Label(self.f1, font=( 'aria' ,16, 'bold' ),text = value['phone'] ,fg="steel blue",bd=10,anchor='w')
+            self.label.grid(row = self.row,column = 5) 
+
+            self.label = Label(self.f1, font=( 'aria' ,16, 'bold' ),text = "    |     " ,fg="black",bd=10,anchor='w')
+            self.label.grid(row = self.row,column = 6)
+
+            self.row = self.row + 1
+        
+        self.lblDash = Label(self.f1,text="------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------",fg="black")
+        self.lblDash.grid(row = self.row,columnspan = 8)
+
+        self.rootViewStudent.mainloop()
 # ADD CLASS
 class AddClass():
     def __init__(self):
