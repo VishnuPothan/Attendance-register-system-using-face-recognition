@@ -168,30 +168,30 @@ class AddTeacher():
 
         # Phone input
         self.lblDash = Label(self.f1,text="---------------------",fg="white")
-        self.lblDash.grid(row=4,columnspan=3)
+        self.lblDash.grid(row=6,columnspan=3)
 
         self.lblPhone = Label(self.f1, font=( 'aria' ,16, 'bold' ),text="Phone",fg="steel blue",bd=10,anchor='w')
-        self.lblPhone.grid(row=5,column=0)
+        self.lblPhone.grid(row=7,column=0)
 
         self.txtPhone = Entry(self.f1,font=('ariel' ,16,'bold'), textvariable = self.phoneTeacher , bd=6,insertwidth=4,bg="powder blue" ,justify='right')
-        self.txtPhone.grid(row=5,column=1)
+        self.txtPhone.grid(row=7,column=1)
 
         #  Face input 
         self.lblDash = Label(self.f1,text="---------------------",fg="white")
-        self.lblDash.grid(row=6,columnspan=3)
+        self.lblDash.grid(row=8,columnspan=3)
 
         self.lblFace = Label(self.f1, font=( 'aria' ,16, 'bold' ),text="Face",fg="steel blue",bd=10,anchor='w')
-        self.lblFace.grid(row=7,column=0)
+        self.lblFace.grid(row=9,column=0)
 
         self.btnFace = Button(self.f1,padx=16,pady=8, bd=6 ,fg="black",font=('ariel' ,16,'bold'),width=4, height=1, text="Capture", bg="grey",command = self.CaptureImageTeacher)
-        self.btnFace.grid(row=7, column=1)
+        self.btnFace.grid(row=9, column=1)
 
         # Add Button
         self.lblDash = Label(self.f1,text="---------------------",fg="white")
-        self.lblDash.grid(row=8,columnspan=3)
+        self.lblDash.grid(row=10,columnspan=3)
 
         self.btnStart = Button(self.f1,padx=16,pady=8, bd=10 ,fg="black",font=('ariel' ,16,'bold'),width=20, text="Add", bg="powder blue",command = self.AddNewTeacher)
-        self.btnStart.grid(row=9, column=1)
+        self.btnStart.grid(row=11, column=1)
 
         self.rootAddTeacher.mainloop()
     
@@ -235,7 +235,7 @@ class AddTeacher():
         cv2.destroyAllWindows()
 
     def AddNewTeacher(self):
-        if (len(self.IDTeacher.get()) == 0 or len(self.nameTeacher.get()) == 0 or len(self.subjectTeacher.get()) == 0 or len(self.phoneTeacher.get() != 10)):
+        if (len(self.IDTeacher.get()) == 0 or len(self.nameTeacher.get()) == 0 or len(self.subjectTeacher.get()) == 0 or len(self.phoneTeacher.get()) != 10):
             messagebox.showerror("Error", "Enter Teacher Details To Continue")
             return
 
@@ -325,31 +325,42 @@ class AddTeacher():
 
         # load the face embeddings
         print("[INFO] loading face embeddings...")
-        self.data = pickle.loads(open(self.embeddings, "rb").read())
+        if os.path.getsize(self.embeddings) > 0:      
+            with open(self.embeddings, "rb") as self.f:
+                self.data = pickle.loads(self.f.read())
+                self.data["embeddings"] = self.data["embeddings"] + self.knownEmbeddings
+                self.data["names"] = self.data["names"] + self.knownNames
+        else:
+            self.data = {"embeddings": self.knownEmbeddings, "names": self.knownNames}
 
-        self.data["embeddings"] = self.data["embeddings"] + self.knownEmbeddings
-        self.data["names"] = self.data["names"] + self.knownNames
 
-        # encode the labels
-        print("[INFO] encoding labels...")
-        self.le = LabelEncoder()
-        self.labels = self.le.fit_transform(self.data["names"])
-
-        # train the model used to accept the 128-d embeddings of the face and then produce the actual face recognition
-        print("[INFO] training model...")
-        self.recognizer = SVC(C=1.0, kernel="linear", probability=True)
-        self.recognizer.fit(self.data["embeddings"], self.labels)
-
-            
-        # write the actual face recognition model to disk
-        self.f = open(self.recognizerPickle, "wb")
-        self.f.write(pickle.dumps(self.recognizer))
+        self.f = open(self.embeddings, "wb")
+        self.f.write(pickle.dumps(self.data))
         self.f.close()
 
-        # write the label encoder to disk
-        self.f = open(self.lePickle, "wb")
-        self.f.write(pickle.dumps(self.le))
-        self.f.close()
+        # train the model only if more than one face is added
+        self.uniqueNames = np.unique(np.array(self.data['names']))
+
+        if(len(self.uniqueNames) > 1):
+            # encode the labels
+            print("[INFO] encoding labels...")
+            self.le = LabelEncoder()
+            self.labels = self.le.fit_transform(self.data["names"])
+
+            # train the model used to accept the 128-d embeddings of the face and then produce the actual face recognition
+            print("[INFO] training model...")
+            self.recognizer = SVC(C=1.0, kernel="linear", probability=True)
+            self.recognizer.fit(self.data["embeddings"], self.labels)
+
+            # write the actual face recognition model to disk
+            self.f = open(self.recognizerPickle, "wb")
+            self.f.write(pickle.dumps(self.recognizer))
+            self.f.close()
+
+            # write the label encoder to disk
+            self.f = open(self.lePickle, "wb")
+            self.f.write(pickle.dumps(self.le))
+            self.f.close()
 
         # write data to firebase
         # initlaize firebase connection
@@ -487,7 +498,7 @@ class AddStudent():
         cv2.destroyAllWindows()
 
     def AddNewStudent(self):
-        if (len(self.IDStudent.get()) == 0 or len(self.nameStudent.get()) == 0 or len(self.phoneStudent) != 10):
+        if (len(self.IDStudent.get()) == 0 or len(self.nameStudent.get()) == 0 or len(self.phoneStudent.get()) != 10):
             messagebox.showerror("Error", "Enter Student Details To Continue")
             return
 
@@ -577,31 +588,42 @@ class AddStudent():
 
         # load the face embeddings
         print("[INFO] loading face embeddings...")
-        self.data = pickle.loads(open(self.embeddings, "rb").read())
+        if os.path.getsize(self.embeddings) > 0:      
+            with open(self.embeddings, "rb") as self.f:
+                self.data = pickle.loads(self.f.read())
+                self.data["embeddings"] = self.data["embeddings"] + self.knownEmbeddings
+                self.data["names"] = self.data["names"] + self.knownNames
+        else:
+            self.data = {"embeddings": self.knownEmbeddings, "names": self.knownNames}
 
-        self.data["embeddings"] = self.data["embeddings"] + self.knownEmbeddings
-        self.data["names"] = self.data["names"] + self.knownNames
-
-        # encode the labels
-        print("[INFO] encoding labels...")
-        self.le = LabelEncoder()
-        self.labels = self.le.fit_transform(self.data["names"])
-
-        # train the model used to accept the 128-d embeddings of the face and then produce the actual face recognition
-        print("[INFO] training model...")
-        self.recognizer = SVC(C=1.0, kernel="linear", probability=True)
-        self.recognizer.fit(self.data["embeddings"], self.labels)
-
-            
-        # write the actual face recognition model to disk
-        self.f = open(self.recognizerPickle, "wb")
-        self.f.write(pickle.dumps(self.recognizer))
+        self.f = open(self.embeddings, "wb")
+        self.f.write(pickle.dumps(self.data))
         self.f.close()
 
-        # write the label encoder to disk
-        self.f = open(self.lePickle, "wb")
-        self.f.write(pickle.dumps(self.le))
-        self.f.close()
+        # train the model only if more than one face is added
+        self.uniqueNames = np.unique(np.array(self.data['names']))
+
+        if(len(self.uniqueNames) > 1):
+            # encode the labels
+            print("[INFO] encoding labels...")
+            self.le = LabelEncoder()
+            self.labels = self.le.fit_transform(self.data["names"])
+
+            # train the model used to accept the 128-d embeddings of the face and then produce the actual face recognition
+            print("[INFO] training model...")
+            self.recognizer = SVC(C=1.0, kernel="linear", probability=True)
+            self.recognizer.fit(self.data["embeddings"], self.labels)
+
+            # write the actual face recognition model to disk
+            self.f = open(self.recognizerPickle, "wb")
+            self.f.write(pickle.dumps(self.recognizer))
+            self.f.close()
+
+            # write the label encoder to disk
+            self.f = open(self.lePickle, "wb")
+            self.f.write(pickle.dumps(self.le))
+            self.f.close()
+
         
         # write data to firebase
         # initlaize firebase connection
@@ -615,7 +637,7 @@ class AddStudent():
         # write to realtime db firebase
         self.studentDict = {"ID" : self.IDStudent.get(), "name" : self.nameStudent.get(), "phone" : self.phoneStudent.get()}
         self.db.child("student").child(self.IDStudent.get()).set(self.studentDict)
-        self.db.child("class").child(self.classID).child(self.IDStudent.get()).set(self.teacherDict)
+        self.db.child("class").child(self.classID).child(self.IDStudent.get()).set(self.studentDict)
 
         # Reset Window
         # ResetStudentWindow()

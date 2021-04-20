@@ -135,20 +135,18 @@ while True:
                 cv2.putText(frame, text, (startX, y),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 255), 2)
 
-                for studentDict in studentDetailsDict:
-                    if(studentDict["ID"] == name):
+                for key, value in studentDetailsDict.items():
+                    if(value["ID"] == name):
                         if(name not in recorded):
                             now = datetime.now()
                             current_time = now.strftime("%H:%M:%S")
-                            student_dict = {"ID" : name, "name" : studentDict["name"], "time" : str(current_time), "subject" : subject}
+                            student_dict = {"ID" : name, "name" : value["name"], "time" : str(current_time), "subject" : subject}
                             attendance_list.append(student_dict)
                             recorded.append(name)
             else:
                 # check if teacher
-                for teacherDict in teacherDetailsDict:
-
-                    if(teacherDict["ID"] == name):
-
+                for key, value in teacherDetailsDict.items():
+                    if(value["ID"] == name):
                         # draw the bounding box
                         text = "{}: {:.2f}%".format(name, proba * 100)
                         y = startY - 10 if startY - 10 > 10 else startY + 10
@@ -156,12 +154,12 @@ while True:
                         cv2.putText(frame, text, (startX, y),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 255), 2)
 
-                        print( teacherDict)
+                        print(value)
                         verify = input("Record attendance(yes/no) : ")
 
                         if(verify == "yes"):
                             record_atendance = True
-                            subject = teacherDict["subject"]
+                            subject = value["subject"]
 
     # update the FPS counter
     fps.update()
