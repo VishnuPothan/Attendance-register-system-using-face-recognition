@@ -17,6 +17,25 @@ from datetime import datetime
 import cv2
 import os
 import json
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import db
+
+
+# Fetch the service account key JSON file contents
+cred = credentials.Certificate('firebase.json')
+
+# Initialize the app with a service account, granting admin privileges
+firebase_admin.initialize_app(cred, {
+    'databaseURL': 'https://attendance-college-project-default-rtdb.firebaseio.com/'
+})
+
+# listener implementation
+requestBool = False
+def listener(event):
+    requestBool = event.data
+    print(str(requestBool) + "h e r e :")
+
 
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
@@ -59,7 +78,6 @@ db = firebase.database()
 # DETAILS FETCHED FROM FIREBASE
 teacherDetailsDict = db.child('teacher').get().val()
 studentDetailsDict  = db.child('student').get().val()
-
 
 # start the FPS throughput estimator
 fps = FPS().start()
@@ -154,12 +172,23 @@ while True:
                         cv2.putText(frame, text, (startX, y),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 255), 2)
 
-                        print(value)
-                        verify = input("Record attendance(yes/no) : ")
+                        """ print(value)
+                        verify = input("Record attendance(yes/no) : ") """
 
-                        if(verify == "yes"):
+                        db.child("record").child("start").set(True)   
+
+                        firebase_admin.db.reference('record/request').listen(listener)
+
+                        while not requestBool:
+                            continue
+                        
+                        print(str(requestBool) + "h e r e : : :")
+                        requestBool = False
+                        db.child("record").child("start").set(False)
+
+                        """ if(verify == "yes"):
                             record_atendance = True
-                            subject = value["subject"]
+                            subject = value["subject"] """
 
     # update the FPS counter
     fps.update()
@@ -172,7 +201,7 @@ while True:
     if key == ord("s"):
         print(attendance_list)
         attendance_dict = {subject : attendance_list}
-        db.child("attendance").child(str(date.today())).push(attendance_dict)
+        db.child("attendance").child(str(date.today())).set(attendance_dict)
         record_atendance = False
         attendance_list = []
         recorded = []
