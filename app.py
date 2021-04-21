@@ -646,7 +646,7 @@ class AddStudent():
 # START ATTENDANCE
 class StartAttendance():
     def __init__(self):
-        os.system('cmd /k' "python recognize_video.py --detector model --embedding-model model/openface_nn4.small2.v1.t7 --recognizer output/face_recognizer.pickle --le output/face_label.pickle")
+        os.system('cmd /k' "python record.py --detector model --embedding-model model/openface_nn4.small2.v1.t7 --recognizer output/face_recognizer.pickle --le output/face_label.pickle")
                 
         #-----------------INITIALIZE TKINTER UI ADD STUDENT-------------------------------------------------------------------
         """ self.rootAttendance = tki.Toplevel()

@@ -35,6 +35,7 @@ requestBool = False
 def listener(event):
     requestBool = event.data
     print(str(requestBool) + "h e r e :")
+    studentRecord()
 
 
 # construct the argument parser and parse the arguments
@@ -172,23 +173,13 @@ while True:
                         cv2.putText(frame, text, (startX, y),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 0, 255), 2)
 
-                        """ print(value)
-                        verify = input("Record attendance(yes/no) : ") """
+                        print(value)
+                        verify = input("Record attendance(yes/no) : ") 
 
-                        db.child("record").child("start").set(True)   
-
-                        firebase_admin.db.reference('record/request').listen(listener)
-
-                        while not requestBool:
-                            continue
                         
-                        print(str(requestBool) + "h e r e : : :")
-                        requestBool = False
-                        db.child("record").child("start").set(False)
-
-                        """ if(verify == "yes"):
+                        if(verify == "yes"):
                             record_atendance = True
-                            subject = value["subject"] """
+                            subject = value["subject"]
 
     # update the FPS counter
     fps.update()
