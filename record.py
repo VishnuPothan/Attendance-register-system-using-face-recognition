@@ -13,7 +13,7 @@ import imutils
 import pickle
 import pyrebase
 import time
-from datetime import datetime
+from datetime import datetime , timedelta
 import cv2
 import os
 import sys
@@ -73,7 +73,13 @@ fps = FPS().start()
 
 # Subject global initilaize
 subject = ""
+teacherID = ""
+startTime = None
 listenerDBChange = None
+attendedStudenID = []
+
+# read data from local data
+lateTime = int(open("local_data.txt", "r").read().split("/")[1])
 
 # Teacher record video
 def teacherRecord():
@@ -156,6 +162,10 @@ def teacherRecord():
                         subject = value["subject"]
                         print("subject : "+subject)
 
+                        global teacherID
+                        teacherID = name
+                        print("teacher ID: " ,teacherID)
+
                         # cleanup
                         vs.stream.release()
                         cv2.destroyAllWindows()
@@ -173,6 +183,13 @@ def teacherRecord():
 
 # Student record video
 def studentRecord():
+    # setting up start time
+    global startTime
+    startTime = datetime.now()
+    lateTimeAdded = timedelta(minutes  = lateTime)
+    startTime = startTime + lateTimeAdded
+    print("up to late :" , startTime)
+
     # initialize the video stream, then allow the camera sensor to warm up
     print("[INFO] starting video stream student...")
     vs = VideoStream(src=0).start()
@@ -251,9 +268,18 @@ def studentRecord():
                         if(name not in recorded):
                             now = datetime.now()
                             current_time = now.strftime("%H:%M:%S")
-                            student_dict = {"ID" : name, "name" : value["name"], "time" : str(current_time), "subject" : subject}
+                            attendanceMark = ""
+
+                            # checking for late or not
+                            if(now < startTime):
+                                attendanceMark = "P"
+                            else:
+                                attendanceMark = "L"
+
+                            student_dict = {"ID" : name, "name" : value["name"], "time" : str(current_time), "subject" : subject, "teacherID" : teacherID, "attendanceMark" : attendanceMark}
                             attendance_list.append(student_dict)
                             recorded.append(name)
+                            attendedStudenID.append(name)
                             print(name)
 
                 
@@ -265,16 +291,27 @@ def studentRecord():
 
         key = cv2.waitKey(1) & 0xFF
 
-        # if the `s` key was pressed, stop attendance recording
+        # if the `s` key was pressed, stop attendance and restart
         if key == ord("s"):
-            print(attendance_list)
-            attendance_dict = {subject : attendance_list}
-            dbPyre.child("attendance").child(str(date.today())).set(attendance_dict)
+            print("attended student :", attendance_list)
+            uniqID = subject + now.strftime("%H:%M:%S")
+
+            # marking attendace absent for non attendning students
+            for key, value in studentDetailsDict.items():
+                if(value["ID"] not in attendedStudenID):
+                    student_dict = {"ID" : value["ID"], "name" : value["name"], "time" : None, "subject" : subject, "teacherID" : teacherID, "attendanceMark" : "A"}
+                    attendance_list.append(student_dict)
+            print("attendace mark: ",attendance_list)   
+
+            dbPyre.child("attendance").child(str(date.today())).child(uniqID).set(attendance_list)
             dbPyre.child("record").child("start").set(False)
             dbPyre.child("record").child("request").set(False)
+
             record_atendance = False
+
             attendance_list = []
             recorded = []
+
             # cleanup
             vs.stream.release()
             cv2.destroyAllWindows()
@@ -282,15 +319,23 @@ def studentRecord():
             # exist current program and call new program
             os.system('cmd /k' "python record.py --detector model --embedding-model model/openface_nn4.small2.v1.t7 --recognizer output/face_recognizer.pickle --le output/face_label.pickle")
             quit()
-            
-            #teacherRecord()
-            
+          
         # if the `q` key was pressed, break from the loop
         if key == ord("q"):
-            attendance_dict = {subject : attendance_list}
-            dbPyre.child("attendance").child(str(date.today())).set(attendance_dict)
+            uniqID = subject + now.strftime("%H:%M:%S")
+
+            # marking attendace absent for non attendning students
+            for key, value in studentDetailsDict.items():
+                if(value["ID"] not in attendedStudenID):
+                    student_dict = {"ID" : value["ID"], "name" : value["name"], "time" : None, "subject" : subject, "teacherID" : teacherID, "attendanceMark" : "A"}
+                    attendance_list.append(student_dict)
+            print("attendace mark: ",attendance_list)
+
+            dbPyre.child("attendance").child(str(date.today())).child(uniqID).set(attendance_list)
+
             dbPyre.child("record").child("start").set(False)
             dbPyre.child("record").child("request").set(False)
+
             break
 
     print(attendance_list)
@@ -304,11 +349,6 @@ requestBool = False
 def listener(event):
     requestBool = event.data
     if(requestBool):
-        """ time.sleep(5)
-        global listenerDBChange
-        print("first", listenerDBChange)
-        listenerDBChange.close()
-        print(listenerDBChange) """
         studentRecord()
     print("request : ", str(requestBool))
 

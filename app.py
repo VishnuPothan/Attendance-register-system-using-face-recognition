@@ -1020,6 +1020,7 @@ class ViewStudent():
         self.lblDash.grid(row = self.row,columnspan = 8)
 
         self.rootViewStudent.mainloop()
+
 # ADD CLASS
 class AddClass():
     def __init__(self):
