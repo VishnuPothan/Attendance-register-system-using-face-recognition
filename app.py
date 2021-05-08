@@ -375,6 +375,7 @@ class AddTeacher():
         self.teacherDict = {"ID" : self.IDTeacher.get(), "name" : self.nameTeacher.get(), "subject" : self.subjectTeacher.get(), "phone" : self.phoneTeacher.get()}
         self.db.child("teacher").child(self.IDTeacher.get()).set(self.teacherDict)
         self.db.child("class").child(self.classID).child(self.IDTeacher.get()).set(self.teacherDict)
+        self.db.child("class").child(self.classID).child("teachers").child(self.IDTeacher.get()).set(self.IDTeacher.get())
 
         # Reset Window
         #ResetTeacherWindow()
