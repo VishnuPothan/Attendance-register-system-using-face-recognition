@@ -122,6 +122,7 @@ class AddTeacher():
         self.IDTeacher = StringVar(self.rootAddTeacher)
         self.subjectTeacher = StringVar(self.rootAddTeacher)
         self.phoneTeacher = StringVar(self.rootAddTeacher)
+        self.classAdvisor = IntVar()
 
         #-----------------INFO TOP-----------------------------------------------------------------------------
         self.Tops = Frame(self.rootAddTeacher,bg="white",width = 1600,height=50,relief=SUNKEN)
@@ -186,12 +187,20 @@ class AddTeacher():
         self.btnFace = Button(self.f1,padx=16,pady=8, bd=6 ,fg="black",font=('ariel' ,16,'bold'),width=4, height=1, text="Capture", bg="grey",command = self.CaptureImageTeacher)
         self.btnFace.grid(row=9, column=1)
 
-        # Add Button
+        # Class Adviser or not
         self.lblDash = Label(self.f1,text="---------------------",fg="white")
         self.lblDash.grid(row=10,columnspan=3)
 
+        
+        self.boxAdviser = Checkbutton(self.f1, text = "Class Advisor", variable = self.classAdviser,onvalue = 1,offvalue = 0,height = 2,width = 10)
+        self.boxAdviser.grid(row=11, column=1)
+
+        # Add Button
+        self.lblDash = Label(self.f1,text="---------------------",fg="white")
+        self.lblDash.grid(row=12,columnspan=3)
+
         self.btnStart = Button(self.f1,padx=16,pady=8, bd=10 ,fg="black",font=('ariel' ,16,'bold'),width=20, text="Add", bg="powder blue",command = self.AddNewTeacher)
-        self.btnStart.grid(row=11, column=1)
+        self.btnStart.grid(row=13, column=1)
 
         self.rootAddTeacher.mainloop()
     
@@ -375,7 +384,10 @@ class AddTeacher():
         self.teacherDict = {"ID" : self.IDTeacher.get(), "name" : self.nameTeacher.get(), "subject" : self.subjectTeacher.get(), "phone" : self.phoneTeacher.get()}
         self.db.child("teacher").child(self.IDTeacher.get()).set(self.teacherDict)
         self.db.child("class").child(self.classID).child(self.IDTeacher.get()).set(self.teacherDict)
-        self.db.child("class").child(self.classID).child("teachers").child(self.IDTeacher.get()).set(self.IDTeacher.get())
+        self.db.child("class").child(self.classID).child("teachers").child(self.IDTeacher.get()).set(self.subjectTeacher.get())
+
+        #class Adviser set
+        self.db.child("class").child(self.classID).child("adviser").set(self.IDTeacher.get())
 
         # Reset Window
         #ResetTeacherWindow()
